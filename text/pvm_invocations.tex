@@ -66,7 +66,7 @@ The inner \textsc{pvm} invocation host-calls, meanwhile, depend on an integrated
 
 The Export host-call depends on two pieces of context; one sequence of segments (blobs of length $\mathsf{W}_G$) to which it may append, and the other an argument passed to the invocation function to dictate the number of segments prior which may assumed to have already been appended. The latter value ensures that an accurate segment index can be provided to the caller.
 
-Unlike the other invocation functions, the Refine invocation function implicitly draws upon some recent service account state item $\delta$. The specific block from which this comes is not important, as long as it is no earlier than its work-package's lookup-anchor block. It explicitly accepts the work-package $p$ and the index of the work item to be refined, $i$. Additionally, the authorizer output $\mathbf{o}$ is provided together with all work items' import segments $\overline{\mathbf{i}}$ and an export segment offset $\segoff$. It results in either some error $\mathbb{J}$ or a pair of the refinement output blob and the export sequence. Formally:
+Unlike the other invocation functions, the Refine invocation function implicitly draws upon some recent service account state item $\delta$. The specific block from which this comes is not important, as long as it is no earlier than its work-package's lookup-anchor block. It explicitly accepts the work-package $p$ and the index of the work item to be refined, $i$. Additionally, the authorizer trace $\mathbf{o}$ is provided together with all work items' import segments $\overline{\mathbf{i}}$ and an export segment offset $\segoff$. It results in either some error $\mathbb{J}$ or a pair of the refinement output blob and the export sequence. Formally:
 \begin{align}
   &\Psi_R \colon \left\{\begin{aligned}
     (\N, \mathbb{P}, \Y, \seq{\seq{\G}}, \N) &\to (\Y \cup \mathbb{J}, \seq{\G}, \N_G) \\
@@ -74,7 +74,7 @@ Unlike the other invocation functions, the Refine invocation function implicitly
       (\token{BAD}, [], 0) &\when w_s \not\in \keys{\delta} \vee \Lambda(\delta[w_s], (p_\mathbf{x})_t, w_\wi¬codehash) = \none \\
       (\token{BIG}, [], 0) &\otherwhen |\Lambda(\delta[w_s], (p_\mathbf{x})_t, w_\wi¬codehash)| > \mathsf{W}_C \\
       &\otherwise: \\
-      &\quad\using a = \se(w_s, w_\mathbf{y}, \mathcal{H}(p), p_\wp¬context, p_\wp¬authcodehash)\ , \se(\var{\mathbf{m}}, \mathbf{c}) = \Lambda(\delta[w_s], (p_\wp¬context)_t, w_\wi¬codehash)\\
+      &\quad\using a = \se(w_s, w_\mathbf{y}, \hash(p), p_\wp¬context, p_\wp¬authcodehash)\ , \se(\var{\mathbf{m}}, \mathbf{c}) = \Lambda(\delta[w_s], (p_\wp¬context)_t, w_\wi¬codehash)\\
       &\quad\also (u, \mathbf{r}, (\mathbf{m}, \mathbf{e})) = \Psi_M(\mathbf{c}, 0, w_g, a, F, (\emptyset, []))\ \colon\\
       (\mathbf{r}, [], u) &\quad\when \mathbf{r} \in \{ \oog, \panic \}  \\
       (\mathbf{r}, \mathbf{e}, u) &\quad\otherwise \\
@@ -111,7 +111,8 @@ Formally, we define our result context to be $\mathbf{X}$, and our invocation co
     \isa{\mathbf{u}}{\partialstate},
     \isa{i}{\N_S},
     \isa{\mathbf{t}}{\seq{\mathbb{T}}},
-    \isa{y}{\H\bm{?}}
+    \isa{y}{\H\bm{?}},
+    \isa{\mathbf{p}}{\{\tuple{\N_S, \Y}\}}
   }\\
   \forall \mathbf{x} \in \mathbf{X} : \mathbf{x}_\mathbf{s} &\equiv (\mathbf{x}_\mathbf{u})_\mathbf{d}[\mathbf{x}_s]
 \end{align}
@@ -124,12 +125,12 @@ We define $\Psi_A$, the Accumulation invocation function as:
 \begin{align}
   \Psi_A& \colon\left\{\begin{aligned}
     \tuple{
-      \partialstate, \N_T, \N_S, \N_G, \seq{\mathbb{O}}
+      \partialstate, \N_T, \N_S, \N_G, \seq{\operandtuple}
     }
     &\to
-    \tuple{\partialstate, \defxfers, \H\bm{?}, \N_G} \\
+    \tuple{\partialstate, \defxfers, \H\bm{?}, \N_G, \seq{\tuple{\N_S, \Y}}} \\
     (\mathbf{u}, t, s, g, \mathbf{o}) &\mapsto \begin{cases}
-      \tup{\mathbf{u}, [], \none, 0} &\when \mathbf{u}_\mathbf{d}[s]_\mathbf{c} = \none \\
+      \tup{\mathbf{u}, [], \none, 0, \sq{}} &\when \mathbf{u}_\mathbf{d}[s]_\mathbf{c} = \none \\
       C(\Psi_M(\mathbf{u}_\mathbf{d}[s]_\mathbf{c}, 5, g, \se(t, s, \var{\mathbf{o}}), F, \tup{I(\mathbf{u}, s), I(\mathbf{u}, s)})) &\otherwise
     \end{cases} \\
   \end{aligned}\right.\\
@@ -139,10 +140,11 @@ We define $\Psi_A$, the Accumulation invocation function as:
       s,
       \mathbf{u},
       i,
-      \is{\mathbf{t}}{[]},
-      \is{y}{\none}
+      \is{\mathbf{t}}{\sq{}},
+      \is{y}{\none},
+      \is{\mathbf{p}}{\sq{}}
     }\\
-    &\qquad\where i = \text{check}((\de_4(\mathcal{H}(\se(s, \eta'_0, \mathbf{H}_t))) \bmod (2^{32}-2^9)) + 2^8) \\
+    &\qquad\where i = \text{check}((\de_4(\hash(\se(s, \eta'_0, \mathbf{H}_t))) \bmod (2^{32}-2^9)) + 2^8) \\
   \end{aligned}\right.\\
   F \in \Omega\ang{(\mathbf{X}, \mathbf{X})} &\colon (n, \gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y})) \mapsto \begin{cases}
     G(\Omega_R(\gascounter, \registers, \memory, \mathbf{s}, \mathbf{x}_s, \mathbf{d}), (\mathbf{x}, \mathbf{y})) &\when n = \mathtt{read} \\
@@ -162,6 +164,7 @@ We define $\Psi_A$, the Accumulation invocation function as:
     \Omega_S(\gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y}), \mathbf{H}_t) &\when n = \mathtt{solicit} \\
     \Omega_F(\gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y}), \mathbf{H}_t) &\when n = \mathtt{forget} \\
     \Omega_\Taurus(\gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y})) &\when n = \mathtt{yield} \\
+    \Omega_\Aries(\gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y}), \mathbf{x}_s) &\when n = \mathtt{provide} \\
     (\continue, \gascounter - 10, [\registers_0, \dots, \registers_6, \mathtt{WHAT}, \registers_8, \dots], \memory, \mathbf{x}) &\otherwise\\
     \quad \where \mathbf{d} = (\mathbf{x}_\mathbf{u})_\mathbf{d}\;,\ \mathbf{s} = (\mathbf{x}_\mathbf{u})_\mathbf{d}[\mathbf{x}_s]\!\!\!\!\!\!\!\!\!\!\!\!\!\!\!\!\!& \\
   \end{cases} \\
@@ -171,26 +174,29 @@ We define $\Psi_A$, the Accumulation invocation function as:
     &\qquad \where \mathbf{x}^* = \mathbf{x} \exc (\mathbf{x}^*_\mathbf{u})_\mathbf{d}[\mathbf{x}^*_s] = \mathbf{s}
   \end{aligned}\right.\\
   C&\colon\left\{\begin{aligned}
-    (\N_G, \mathbb{Y} \cup \{\oog, \panic\}, (\mathbf{X}, \mathbf{X})) &\to (\partialstate, \defxfers, \H\bm{?}, \N_G) \\
+    (\N_G, \mathbb{Y} \cup \{\oog, \panic\}, (\mathbf{X}, \mathbf{X})) &\to (\partialstate, \defxfers, \H\bm{?}, \N_G, \seq{\tuple{\N_S, \Y}}) \\
     (u, \mathbf{o}, (\mathbf{x}, \mathbf{y})) &\mapsto \begin{cases}
       \tup{
         \mathbf{y}_\mathbf{u},
         \mathbf{y}_\mathbf{t},
         \mathbf{y}_y,
-        u
+        u,
+        \mathbf{y}_\mathbf{p}
       } & \when \mathbf{o} \in \{\oog, \panic\} \\
       \tup{
         \mathbf{x}_\mathbf{u},
         \mathbf{x}_\mathbf{t},
         \mathbf{o},
-        u
-      } & \otherwhen \mathbf{o} \in \H \\
+        u,
+        \mathbf{x}_\mathbf{p}
+        } & \otherwhen \mathbf{o} \in \H \\
       \tup{
         \mathbf{x}_\mathbf{u},
         \mathbf{x}_\mathbf{t},
         \mathbf{x}_y,
-        u
-      } & \otherwise \\
+        u,
+        \mathbf{x}_\mathbf{p}
+        } & \otherwise \\
     \end{cases}
   \end{aligned}\right.
 \end{align}
@@ -320,7 +326,7 @@ Other than the gas-counter which is explicitly defined, elements of \textsc{pvm}
     \using [k_o, k_z, o] &= \registers_{8\dots+3} \\
     \using \mathbf{v} &= \begin{cases}
       \error &\when \mathbb{N}_{k_o \dots+ k_z} \not\subseteq \mathbb{V}_{\memory} \\
-      \mathbf{a}_\mathbf{s}[k] &\otherwhen \mathbf{a} \ne \none \wedge k \in \keys{\mathbf{a}_\mathbf{s}}\,,\ \where k = \mathcal{H}(\se_4(s^*) \concat \memory_{k_o\dots+k_z}) \\
+      \mathbf{a}_\mathbf{s}[k] &\otherwhen \mathbf{a} \ne \none \wedge k \in \keys{\mathbf{a}_\mathbf{s}}\,,\ \where k = \hash(\se_4(s^*) \concat \memory_{k_o\dots+k_z}) \\
       \none &\otherwise
     \end{cases} \\
     \using f &= \min(\registers_{11}, |\mathbf{v}|) \\
@@ -340,7 +346,7 @@ Other than the gas-counter which is explicitly defined, elements of \textsc{pvm}
   $\begin{aligned}
     \using [k_o, k_z, v_o, v_z] &= \registers_{7\dots+4} \\
     \using k &= \begin{cases}
-      \mathcal{H}(\se_4(s) \concat \memory_{k_o\dots+k_z}) &\when \N_{k_o \dots+ k_z} \subseteq \mathbb{V}_{\memory} \\
+      \hash(\se_4(s) \concat \memory_{k_o\dots+k_z}) &\when \N_{k_o \dots+ k_z} \subseteq \mathbb{V}_{\memory} \\
       \error &\otherwise
     \end{cases} \\
     \using \mathbf{a} &= \begin{cases}
@@ -642,6 +648,34 @@ Other than the gas-counter which is explicitly defined, elements of \textsc{pvm}
       (\continue, \mathtt{OK}, h) &\otherwise \\
     \end{cases} \\
   \end{aligned}$\\
+  \cmidrule(lr){1-1}\cmidrule(lr){2-2}
+  \makecell*[l]{
+  $\Omega_\Aries(\gascounter, \registers, \memory, (\mathbf{x}, \mathbf{y}), s)$ \\
+  \texttt{provide} = 27 \\
+  $g = 10$} &
+  $\begin{aligned}
+    \using [o, z] &= \registers_{8, 9} \\
+    \using \mathbf{d} &= (\mathbf{x}_\mathbf{u})_\mathbf{d}\\
+    \using s^* &= \begin{cases}
+      s &\when \registers_7 = 2^{64} - 1 \\
+      \registers_7 &\otherwise
+    \end{cases} \\
+    \using \mathbf{i} &= \begin{cases}
+      \memory_{o\dots+z} &\when \N_{o \dots+ z} \subseteq \mathbb{V}_{\memory} \\
+      \error &\otherwise
+    \end{cases} \\
+    \using \mathbf{a} &= \begin{cases}
+      \mathbf{d}[s^*] &\when s^* \in \keys{\mathbf{d}} \\
+      \none &\otherwise
+    \end{cases} \\
+    (\execst', \registers'_7, \mathbf{x}'_\mathbf{p}) &\equiv \begin{cases}
+      (\panic, \registers_7, \mathbf{x}_\mathbf{p}) &\when \mathbf{i} = \error \\
+      (\continue, \mathtt{WHO}, \mathbf{x}_\mathbf{p}) &\otherwhen \mathbf{a} = \none \\
+      (\continue, \mathtt{HUH}, \mathbf{x}_\mathbf{p}) &\otherwhen \mathbf{a}_\mathbf{l}[\tup{\hash(\mathbf{i}), z}] \ne \sq{} \\
+      (\continue, \mathtt{HUH}, \mathbf{x}_\mathbf{p}) &\otherwhen \tup{s^*, \mathbf{i}} \in \mathbf{x}_\mathbf{p} \\
+      (\continue, \mathtt{OK}, \mathbf{x}_\mathbf{p} \cup \{\tup{s^*, \mathbf{i}}\}) &\otherwise \\
+    \end{cases} \\
+  \end{aligned}$\\
   \bottomrule
 \end{longtable}
 
@@ -696,11 +730,11 @@ These assume some refine context pair $(\mathbf{m}, \mathbf{e}) \in (\dict{\N}{\
       \se(p) &\when \registers_{10} = 0 \\
       \mathbf{o} &\when \registers_{10} = 1 \\
       p_\mathbf{w}[\registers_{11}]_\mathbf{y} &\when \registers_{10} = 2 \wedge \registers_{11} < |p_\mathbf{w}| \\
-      \mathbf{x} &\when \registers_{10} = 3 \wedge \registers_{11} < |p_\mathbf{w}| \wedge \registers_{12} < |p_\mathbf{w}[\registers_{11}]_\mathbf{x}| \wedge (\mathcal{H}(\mathbf{x}), |\mathbf{x}|) = p_\mathbf{w}[\registers_{11}]_\mathbf{x}[\registers_{12}] \\
-      \mathbf{x} &\when \registers_{10} = 4 \wedge \registers_{11} < |p_\mathbf{w}[i]_\mathbf{x}| \wedge (\mathcal{H}(\mathbf{x}), |\mathbf{x}|) = p_\mathbf{w}[i]_\mathbf{x}[\registers_{11}] \\[2pt]
+      \mathbf{x} &\when \registers_{10} = 3 \wedge \registers_{11} < |p_\mathbf{w}| \wedge \registers_{12} < |p_\mathbf{w}[\registers_{11}]_\mathbf{x}| \wedge (\hash(\mathbf{x}), |\mathbf{x}|) = p_\mathbf{w}[\registers_{11}]_\mathbf{x}[\registers_{12}] \\
+      \mathbf{x} &\when \registers_{10} = 4 \wedge \registers_{11} < |p_\mathbf{w}[i]_\mathbf{x}| \wedge (\hash(\mathbf{x}), |\mathbf{x}|) = p_\mathbf{w}[i]_\mathbf{x}[\registers_{11}] \\[2pt]
       \overline{\mathbf{i}}[\registers_{11}]_{\registers_{12}} &\when \registers_{10} = 5 \wedge \registers_{11} < |\overline{\mathbf{i}}| \wedge \registers_{12} < |\overline{\mathbf{i}}[\registers_{11}]| \\
       \overline{\mathbf{i}}[i]_{\registers_{11}} &\when \registers_{10} = 6 \wedge \registers_{11} < |\overline{\mathbf{i}}[i]| \\
-      p_\wp¬authparam &\when \registers_{10} = 7 \\
+      p_\wp¬authconfig &\when \registers_{10} = 7 \\
       \none &\otherwise
     \end{cases} \\
     \using o &= \registers_7 \\
@@ -726,7 +760,7 @@ These assume some refine context pair $(\mathbf{m}, \mathbf{e}) \in (\dict{\N}{\
     \end{cases}\\
     (\execst', \registers'_7, \mathbf{e}') &\equiv \begin{cases}
       (\panic, \registers_7, \mathbf{e}) &\when \mathbf{x} = \error \\
-      (\continue, \mathtt{FULL}, \mathbf{e}) &\otherwhen \segoff+|\mathbf{e}| \ge \mathsf{W}_M \\
+      (\continue, \mathtt{FULL}, \mathbf{e}) &\otherwhen \segoff+|\mathbf{e}| \ge \mathsf{W}_X \\
       (\continue, \segoff + |\mathbf{e}|, \mathbf{e} \doubleplus \mathbf{x}) &\otherwise
     \end{cases}
   \end{aligned}$\\
@@ -861,7 +895,7 @@ These assume some refine context pair $(\mathbf{m}, \mathbf{e}) \in (\dict{\N}{\
   $\begin{aligned}
     \using n &= \registers_7 \\
     (\registers'_7, \mathbf{m}') &\equiv \begin{cases}
-      (\mathtt{WHO}, \mathbf{m}) &\when n \ne \keys{\mathbf{m}} \\
+      (\mathtt{WHO}, \mathbf{m}) &\when n \not\in \keys{\mathbf{m}} \\
       (\mathbf{m}[n]_i, \mathbf{m} \setminus n) &\otherwise \\
     \end{cases} \\
   \end{aligned}$\\
